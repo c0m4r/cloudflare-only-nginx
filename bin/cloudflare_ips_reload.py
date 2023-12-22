@@ -5,7 +5,7 @@ import urllib.request
 import subprocess
 import ipaddress
 
-# CloudFlare-only nginx (IPv6)
+# CloudFlare-only nginx (IPv6-only)
 # ----------------------------------------------------
 # This script will recreate CLOUDFLARE ip6tables chain
 # and nginx realip config with current CloudFlare ips
@@ -32,7 +32,6 @@ def valid(ip):
 
 # Flush CF chain and backup nginx configuration
 exec("ip6tables -F CLOUDFLARE")
-exec("mv /etc/nginx/cloudflare.conf /etc/nginx/cloudflare.conf.old")
 
 # Reading CloudFlare networks
 with urllib.request.urlopen(url) as url:
@@ -40,7 +39,7 @@ with urllib.request.urlopen(url) as url:
     ipv6 = data["result"]["ipv6_cidrs"]
 
 # Recreate CF chain and restore nginx configuration
-f = open("/etc/nginx/cloudflare.conf", "a")
+f = open("/etc/nginx/cloudflare.ipv6.conf", "a")
 
 for ip in ipv6:
     if valid(ip):
@@ -49,7 +48,6 @@ for ip in ipv6:
 
 exec("ip6tables -A CLOUDFLARE -j %s" % (target))
 
-f.write('real_ip_header CF-Connecting-IP;\n')
 f.close()
 
 # Figure out which init system is in use
