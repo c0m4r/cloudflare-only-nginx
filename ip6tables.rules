@@ -7,7 +7,7 @@
 -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 -A INPUT -p tcp -m tcp --dport 443 -j CLOUDFLARE
 -A INPUT -p tcp -m tcp --dport 22 --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -m comment --comment "SSH" -j ACCEPT
--A INPUT -p ipv6-icmp -m icmp6 -j ACCEPT
+-A INPUT -p ipv6-icmp -j ACCEPT
 -A CLOUDFLARE -s 2400:cb00::/32 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -m comment --comment "CloudFlare IP" -j ACCEPT
 -A CLOUDFLARE -s 2606:4700::/32 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -m comment --comment "CloudFlare IP" -j ACCEPT
 -A CLOUDFLARE -s 2803:f800::/32 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -m comment --comment "CloudFlare IP" -j ACCEPT
@@ -16,3 +16,4 @@
 -A CLOUDFLARE -s 2a06:98c0::/29 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -m comment --comment "CloudFlare IP" -j ACCEPT
 -A CLOUDFLARE -s 2c0f:f248::/32 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -m comment --comment "CloudFlare IP" -j ACCEPT
 -A CLOUDFLARE -j RETURN
+COMMIT
