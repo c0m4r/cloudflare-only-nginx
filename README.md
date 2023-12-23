@@ -17,7 +17,7 @@ With [realip module](https://nginx.org/en/docs/http/ngx_http_realip_module.html)
 ### Helper script
 
 ```
-Usage: Usage: ./cloudflare_ips_reload.py [option]
+Usage: ./cloudflare_ips_reload.py [option]
 Options:
 
  -4, --ipv4	# Only reload IPv4
