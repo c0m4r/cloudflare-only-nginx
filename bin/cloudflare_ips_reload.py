@@ -9,6 +9,27 @@
 # ----------------------------------------------------
 # Deps: iptables, nginx, ngx_http_realip_module
 # ----------------------------------------------------
+# MIT License
+# 
+# Copyright (c) 2023 c0m4r
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
 # ----------------------------------------------------
 # Variables
@@ -17,8 +38,11 @@
 # API URL for https://www.cloudflare.com/ips/
 url = "https://api.cloudflare.com/client/v4/ips"
 
-# iptables final chain target
-target = "RETURN"
+# iptables chain name
+iptables_chain = "CLOUDFLARE"
+
+# iptables chain target
+iptables_target = "RETURN"
 
 # ----------------------------------------------------
 # Imports
@@ -27,6 +51,7 @@ target = "RETURN"
 import sys
 import json
 import urllib.request
+import shutil
 import subprocess
 import ipaddress
 
@@ -44,7 +69,7 @@ if option not in (None, "-4", "-6", "--ipv4", "--ipv6"):
     print(" -4, --ipv4\t# Only reload IPv4")
     print(" -6, --ipv6\t# Only reload IPv6")
     print("\nhttps://github.com/c0m4r/cloudflare-only-nginx")
-    exit(1)
+    sys.exit(1)
 
 # ----------------------------------------------------
 # Functions
@@ -56,18 +81,23 @@ def exec(cmd):
 def valid(ip):
     try:
         ipaddress.ip_network(ip)
-        print(ip)
+        if option not in ("-s", "--silent"): print(ip)
         return True
     except:
         print('%s is not a valid IP' % (ip))
         return False
 
 def cfrebuild(ips, iptcmd, confpath):
-    # Flush CF chain
-    exec("%s -N CLOUDFLARE 2>/dev/null" % (iptcmd))
-    exec("%s -F CLOUDFLARE" % (iptcmd))
-    # Recreate CF chain and restore nginx configuration
-    f = open(confpath, "a")
+    try:
+        f = open(confpath, "a")
+    except:
+        print("Can't open %s" % (confpath))
+        sys.exit(1)
+    if shutil.which(iptcmd) is None:
+        print("%s not found" % (iptcmd))
+        sys.exit(1)
+    exec("%s -N %s 2>/dev/null" % (iptcmd, iptables_chain))
+    exec("%s -F %s" % (iptcmd, iptables_chain))
     for ip in ips:
         if valid(ip):
             exec("%s -A CLOUDFLARE -p tcp -s %s --syn -m conntrack --ctstate NEW -j ACCEPT -m comment --comment 'CloudFlare IP'" % (iptcmd, ip))
@@ -75,7 +105,7 @@ def cfrebuild(ips, iptcmd, confpath):
         else:
             print("ip: %s is invalid" % (ip))
     f.close()
-    exec("%s -A CLOUDFLARE -j %s" % (iptcmd, target))
+    exec("%s -A %s -j %s" % (iptcmd, iptables_chain, iptables_target))
 
 # ----------------------------------------------------
 # Execute
