@@ -17,9 +17,11 @@ With [realip module](https://nginx.org/en/docs/http/ngx_http_realip_module.html)
 ### Helper script
 
 ```
-python3 cloudflare_ips_reload.py
+Usage: Usage: ./cloudflare_ips_reload.py [option]
+Options:
+
+ -4, --ipv4	# Only reload IPv4
+ -6, --ipv6	# Only reload IPv6
 ```
 
-This script will recreate ip6tables CLOUDFLARE chain and allow traffic from only CloudFlare networks, then recreate realip configuration and reload nginx.
-
-A chain must be present prior to running the script.
+This script will recreate iptables CLOUDFLARE chain and allow traffic from only CloudFlare networks, then recreate realip configuration and reload nginx.
