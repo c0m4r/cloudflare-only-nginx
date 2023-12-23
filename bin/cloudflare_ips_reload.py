@@ -6,6 +6,7 @@ import subprocess
 import ipaddress
 
 # CloudFlare-only nginx (IPv6-only)
+# https://github.com/c0m4r/cloudflare-only-nginx
 # ----------------------------------------------------
 # This script will recreate CLOUDFLARE ip6tables chain
 # and nginx realip config with current CloudFlare ips
