@@ -4,7 +4,7 @@
 # CloudFlare-only nginx
 # https://github.com/c0m4r/cloudflare-only-nginx
 # ----------------------------------------------------
-# This script will recreate CLOUDFLARE ip6tables chain
+# This script will recreate CLOUDFLARE iptables chain
 # and nginx realip config with current CloudFlare ips
 # ----------------------------------------------------
 # Deps: iptables, nginx, ngx_http_realip_module
