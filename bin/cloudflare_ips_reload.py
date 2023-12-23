@@ -40,7 +40,7 @@ except:
     option = None
 
 if option not in (None, "-4", "-6", "--ipv4", "--ipv6"):
-    print("Usage: Usage: %s [option]\nOptions:\n" % sys.argv[0]);
+    print("Usage: %s [option]\nOptions:\n" % sys.argv[0]);
     print(" -4, --ipv4\t# Only reload IPv4")
     print(" -6, --ipv6\t# Only reload IPv6")
     print("\nhttps://github.com/c0m4r/cloudflare-only-nginx")
