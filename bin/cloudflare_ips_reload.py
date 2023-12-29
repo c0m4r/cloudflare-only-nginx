@@ -1,6 +1,17 @@
 #!/usr/bin/env python3
 
 # ----------------------------------------------------
+# Imports
+# ----------------------------------------------------
+
+import sys
+import json
+import urllib.request
+import shutil
+import subprocess
+import ipaddress
+
+# ----------------------------------------------------
 # CloudFlare-only nginx
 # https://github.com/c0m4r/cloudflare-only-nginx
 # ----------------------------------------------------
@@ -45,27 +56,16 @@ iptables_chain = "CLOUDFLARE"
 iptables_target = "RETURN"
 
 # ----------------------------------------------------
-# Imports
-# ----------------------------------------------------
-
-import sys
-import json
-import urllib.request
-import shutil
-import subprocess
-import ipaddress
-
-# ----------------------------------------------------
 # Options
 # ----------------------------------------------------
 
 try:
     option = sys.argv[1]
-except:
+except Exception:
     option = None
 
 if option not in (None, "-4", "-6", "--ipv4", "--ipv6"):
-    print("Usage: %s [option]\nOptions:\n" % sys.argv[0]);
+    print("Usage: %s [option]\nOptions:\n" % sys.argv[0])
     print(" -4, --ipv4\t# Only reload IPv4")
     print(" -6, --ipv6\t# Only reload IPv6")
     print("\nhttps://github.com/c0m4r/cloudflare-only-nginx")
@@ -81,16 +81,17 @@ def exec(cmd):
 def valid(ip):
     try:
         ipaddress.ip_network(ip)
-        if option not in ("-s", "--silent"): print(ip)
+        if option not in ("-s", "--silent"):
+            print(ip)
         return True
-    except:
+    except Exception:
         print('%s is not a valid IP' % (ip))
         return False
 
 def cfrebuild(ips, iptcmd, confpath):
     try:
         f = open(confpath, "a")
-    except:
+    except Exception:
         print("Can't open %s" % (confpath))
         sys.exit(1)
     if shutil.which(iptcmd) is None:
@@ -128,10 +129,10 @@ init = subprocess.check_output("ps -p 1 -o comm --no-headers", shell=True) .stri
 
 # Reload nginx
 if init == 'runit':
-    exec("sv reload nginx")
+    exec("nginx -t && sv reload nginx")
 elif init == 'init':
-    exec("service nginx reload")
+    exec("nginx -t && service nginx reload")
 elif init == 'systemd':
-    exec("systemctl reload nginx")
+    exec("nginx -t && systemctl reload nginx")
 else:
     print('unknown init, reload nginx manually')
