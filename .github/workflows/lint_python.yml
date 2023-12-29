@@ -22,4 +22,5 @@ jobs:
       - run: mypy --install-types --non-interactive . || true
       - run: pytest . || true
       - run: pytest --doctest-modules . || true
+      - run: mkdir -p /etc/nginx
       - run: python bin/cloudflare_ips_reload.py --help
