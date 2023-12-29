@@ -90,7 +90,7 @@ def valid(ip):
 
 def cfrebuild(ips, iptcmd, confpath):
     try:
-        f = open(confpath, "a")
+        f = open(confpath, "w+")
     except Exception:
         print("Can't open %s" % (confpath))
         sys.exit(1)
