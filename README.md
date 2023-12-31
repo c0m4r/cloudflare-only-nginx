@@ -14,6 +14,38 @@ Keep in mind that CloudFlare will only use tcp/443 port (HTTPS). We don't need t
 
 With [realip module](https://nginx.org/en/docs/http/ngx_http_realip_module.html) you can log real client IP sent by CloudFlare in [CF-Connecting-IP header](https://developers.cloudflare.com/support/troubleshooting/restoring-visitor-ips/restoring-original-visitor-ips/).
 
+Edit nginx.conf and add these settings inside `http` section:
+
+### nginx configuration
+
+```
+# realip
+include cloudflare.ipv4.conf;
+include cloudflare.ipv6.conf;
+real_ip_header CF-Connecting-IP;
+```
+
+### iptables
+
+Before you use the script, make sure that incoming tcp/443 traffic is pointing to CLOUDFLARE chain.
+
+If your INPUT default policy is DROP, just add:
+
+```
+-N CLOUDFLARE
+-A INPUT -p tcp -m tcp --dport 443 -j CLOUDFLARE
+```
+
+If your INPUT default policy is ACCEPT, make sure to add a DROP rule afterwards:
+
+```
+-N CLOUDFLARE
+-A INPUT -p tcp -m tcp --dport 443 -j CLOUDFLARE
+-A INPUT -p tcp -m tcp --dport 443 -j DROP
+```
+
+or edit cloudflare_ips_reload.py and change `iptables_target = "RETURN"` to `iptables_target = "DROP"`
+
 ### Helper script
 
 ```
@@ -25,3 +57,5 @@ Options:
 ```
 
 This script will recreate iptables CLOUDFLARE chain and allow traffic from only CloudFlare networks, then recreate realip configuration and reload nginx.
+
+With no options it will recreate rules for both IPv4 and IPv6.
