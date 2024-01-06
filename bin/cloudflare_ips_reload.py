@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+"""
+cloudflare_ips_reload
+"""
+
 # ----------------------------------------------------
 # Imports
 # ----------------------------------------------------
@@ -46,24 +50,24 @@ from ipaddress import ip_network as is_ip_network
 # ----------------------------------------------------
 
 # API URL for https://www.cloudflare.com/ips/
-url = "https://api.cloudflare.com/client/v4/ips"
+URL = "https://api.cloudflare.com/client/v4/ips"
 
 # iptables chain name
-iptables_chain = "CLOUDFLARE"
+IPTABLES_CHAIN = "CLOUDFLARE"
 
 # iptables chain target
-iptables_target = "RETURN"
+IPTABLES_TARGET = "RETURN"
 
 # ----------------------------------------------------
 # Options
 # ----------------------------------------------------
 
 try:
-    option = sys.argv[1]
+    OPTION = sys.argv[1]
 except Exception:
-    option = None
+    OPTION = None
 
-if option not in (None, "-4", "-6", "--ipv4", "--ipv6"):
+if OPTION not in (None, "-4", "-6", "--ipv4", "--ipv6"):
     print("Usage: %s [option]\nOptions:\n" % sys.argv[0])
     print(" -4, --ipv4\t# Only reload configuration for IPv4")
     print(" -6, --ipv6\t# Only reload configuration for IPv6")
@@ -76,9 +80,10 @@ if option not in (None, "-4", "-6", "--ipv4", "--ipv6"):
 
 
 def valid(ip):
+    """validate ip network"""
     try:
         is_ip_network(ip)
-        if option not in ("-s", "--silent"):
+        if OPTION not in ("-s", "--silent"):
             print(ip)
         return True
     except Exception:
@@ -87,6 +92,7 @@ def valid(ip):
 
 
 def cfrebuild(ips, iptcmd, confpath):
+    """rebuild cloudflare configuration"""
     try:
         f = open(confpath, "w+")
     except Exception:
@@ -95,8 +101,8 @@ def cfrebuild(ips, iptcmd, confpath):
     if which(iptcmd) is None:
         print("%s not found" % (iptcmd))
         sys.exit(1)
-    run([iptcmd, "-N", iptables_chain], stderr=DEVNULL)
-    run([iptcmd, "-F", iptables_chain])
+    run([iptcmd, "-N", IPTABLES_CHAIN], stderr=DEVNULL)
+    run([iptcmd, "-F", IPTABLES_CHAIN])
     for ip in ips:
         if valid(ip):
             run(
@@ -125,22 +131,22 @@ def cfrebuild(ips, iptcmd, confpath):
         else:
             print("ip: %s is invalid" % (ip))
     f.close()
-    run([iptcmd, "-A", iptables_chain, "-j", iptables_target])
+    run([iptcmd, "-A", IPTABLES_CHAIN, "-j", IPTABLES_TARGET])
 
 
 # ----------------------------------------------------
 # Execute
 # ----------------------------------------------------
 
-resp = requests.get(url=url, timeout=30)
+resp = requests.get(url=URL, timeout=30)
 data = resp.json()
 ipv4 = data["result"]["ipv4_cidrs"]
 ipv6 = data["result"]["ipv6_cidrs"]
 
 # Rebuild configuration
-if option in (None, "-4", "--ipv4"):
+if OPTION in (None, "-4", "--ipv4"):
     cfrebuild(ipv4, "iptables", "/etc/nginx/cloudflare.ipv4.conf")
-if option in (None, "-6", "--ipv6"):
+if OPTION in (None, "-6", "--ipv6"):
     cfrebuild(ipv6, "ip6tables", "/etc/nginx/cloudflare.ipv6.conf")
 
 # Figure out which init system is in use
