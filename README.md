@@ -31,33 +31,30 @@ real_ip_header CF-Connecting-IP;
 
 Before you use the script, make sure that incoming tcp/443 traffic is pointing to CLOUDFLARE chain.
 
-If your INPUT default policy is DROP, just add:
-
 ```
 -N CLOUDFLARE
 -A INPUT -p tcp -m tcp --dport 443 -j CLOUDFLARE
 ```
 
-If your INPUT default policy is ACCEPT, make sure to add a DROP rule afterwards:
-
-```
--N CLOUDFLARE
--A INPUT -p tcp -m tcp --dport 443 -j CLOUDFLARE
--A INPUT -p tcp -m tcp --dport 443 -j DROP
-```
-
-or edit cloudflare_ips_reload.py and change `iptables_target = "RETURN"` to `iptables_target = "DROP"`
+If your INPUT default policy is ACCEPT, make sure to run cloudflare_ips_reload.py with `--target DROP`
 
 ### Helper script
 
 ```
-Usage: ./cloudflare_ips_reload.py [option]
-Options:
+usage: cloudflare_ips_reload.py [-h] [-4] [-6] [-s] [--chain CHAIN] [--target TARGET]
 
- -4, --ipv4	# Only reload IPv4
- -6, --ipv6	# Only reload IPv6
+CloudFlare-only nginx
+https://github.com/c0m4r/cloudflare-only-nginx
+
+options:
+  -h, --help       show this help message and exit
+  -4, --ipv4       only reload configuration for IPv4
+  -6, --ipv6       only reload configuration for IPv6
+  -s, --silent     silent mode - only prints errors
+  --chain CHAIN    iptables chain name (default: CLOUDFLARE)
+  --target TARGET  iptables chain target (default: RETURN)
 ```
 
 This script will recreate iptables CLOUDFLARE chain and allow traffic from only CloudFlare networks, then recreate realip configuration and reload nginx.
 
-With no options it will recreate rules for both IPv4 and IPv6.
+By default, with no options passed, it will recreate rules for both IPv4 and IPv6.
