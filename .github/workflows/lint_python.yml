@@ -14,12 +14,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
-      - run: pip install --upgrade pip setuptools wheel
-      - run: pip install black codespell mypy pytest ruff safety
-      - run: ruff --output-format=github --line-length=100 bin/cloudflare_ips_reload.py
-      - run: black --check . || true
+        with:
+          python-version: '3.12.1'
+      - run: pip install --upgrade pip
+      - run: pip install --upgrade setuptools wheel
+      - run: pip install black codespell mypy pytest ruff safety pylama pylint
+      - run: ruff .
+      - run: black --diff .
       - run: codespell --skip="./.git/*"
+      - run: pip install -r bin/requirements.txt
       - run: mypy --install-types --non-interactive . || true
-      - run: pytest . || true
+      - run: pylama bin/cloudflare_ips_reload.py || true
+      - run: pylint bin/cloudflare_ips_reload.py || true
+      - run: safety check --ignore 62044
+      - run: pytest .
       - run: pytest --doctest-modules . || true
       - run: python bin/cloudflare_ips_reload.py --help
