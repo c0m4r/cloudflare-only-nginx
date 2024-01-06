@@ -145,7 +145,9 @@ if option in (None, "-6", "--ipv6"):
 
 # Figure out which init system is in use
 init = run(
-    ["ps", "-p", "1", "-o", "comm", "--no-headers"], encoding="utf-8", stdout=PIPE
+    [which("ps"), "-p", "1", "-o", "comm", "--no-headers"],
+    encoding="utf-8",
+    stdout=PIPE,
 )
 init = init.stdout.strip()
 
@@ -160,10 +162,10 @@ else:
     print("nginx not found, reload it manually")
 
 if init == "runit":
-    run(["sv", "reload", "nginx"])
+    run([which("sv"), "reload", "nginx"])
 elif init == "init":
-    run(["service", "nginx", "reload"])
+    run([which("service"), "nginx", "reload"])
 elif init == "systemd":
-    run(["systemctl", "reload", "nginx"])
+    run([which("systemctl"), "reload", "nginx"])
 else:
     print("unknown init, reload nginx manually")
