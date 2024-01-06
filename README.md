@@ -1,5 +1,7 @@
 ##  CloudFlare-only nginx
 
+![Python](https://img.shields.io/badge/made%20with-python-blue?logo=python&logoColor=ffffff) [![CodeFactor](https://www.codefactor.io/repository/github/c0m4r/cloudflare-only-nginx/badge)](https://www.codefactor.io/repository/github/c0m4r/cloudflare-only-nginx)
+
 This repository contains a complete configuration examples for CloudFlare-only nginx.
 
 The goal is to close your web server to cloudflare-only traffic using firewall rules and [CloudFlare IP list](https://www.cloudflare.com/ips/).
