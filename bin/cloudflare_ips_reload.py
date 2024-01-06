@@ -4,12 +4,11 @@
 # Imports
 # ----------------------------------------------------
 
+import requests
 import sys
-import json
-import urllib.request
-import shutil
-import subprocess
-import ipaddress
+from shutil import which
+from subprocess import run, DEVNULL, PIPE
+from ipaddress import ip_network as is_ip_network
 
 # ----------------------------------------------------
 # CloudFlare-only nginx
@@ -21,9 +20,9 @@ import ipaddress
 # Deps: iptables, nginx, ngx_http_realip_module
 # ----------------------------------------------------
 # MIT License
-# 
+#
 # Copyright (c) 2023 c0m4r
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -75,18 +74,17 @@ if option not in (None, "-4", "-6", "--ipv4", "--ipv6"):
 # Functions
 # ----------------------------------------------------
 
-def exec(cmd):
-    subprocess.call(cmd, shell=True)
 
 def valid(ip):
     try:
-        ipaddress.ip_network(ip)
+        is_ip_network(ip)
         if option not in ("-s", "--silent"):
             print(ip)
         return True
     except Exception:
-        print('%s is not a valid IP' % (ip))
+        print("%s is not a valid IP" % (ip))
         return False
+
 
 def cfrebuild(ips, iptcmd, confpath):
     try:
@@ -94,29 +92,50 @@ def cfrebuild(ips, iptcmd, confpath):
     except Exception:
         print("Can't open %s" % (confpath))
         sys.exit(1)
-    if shutil.which(iptcmd) is None:
+    if which(iptcmd) is None:
         print("%s not found" % (iptcmd))
         sys.exit(1)
-    exec("%s -N %s 2>/dev/null" % (iptcmd, iptables_chain))
-    exec("%s -F %s" % (iptcmd, iptables_chain))
+    run([iptcmd, "-N", iptables_chain], stderr=DEVNULL)
+    run([iptcmd, "-F", iptables_chain])
     for ip in ips:
         if valid(ip):
-            exec("%s -A CLOUDFLARE -p tcp -s %s --syn -m conntrack --ctstate NEW -j ACCEPT -m comment --comment 'CloudFlare IP'" % (iptcmd, ip))
-            f.write('set_real_ip_from %s;\n' % (ip))
+            run(
+                [
+                    iptcmd,
+                    "-A",
+                    "CLOUDFLARE",
+                    "-p",
+                    "tcp",
+                    "-s",
+                    ip,
+                    "--syn",
+                    "-m",
+                    "conntrack",
+                    "--ctstate",
+                    "NEW",
+                    "-j",
+                    "ACCEPT",
+                    "-m",
+                    "comment",
+                    "--comment",
+                    r"\'CloudFlare IP\'",
+                ]
+            )
+            f.write("set_real_ip_from %s;\n" % (ip))
         else:
             print("ip: %s is invalid" % (ip))
     f.close()
-    exec("%s -A %s -j %s" % (iptcmd, iptables_chain, iptables_target))
+    run([iptcmd, "-A", iptables_chain, "-j", iptables_target])
+
 
 # ----------------------------------------------------
 # Execute
 # ----------------------------------------------------
 
-# Reading CloudFlare networks
-with urllib.request.urlopen(url) as url:
-    data = json.load(url)
-    ipv4 = data["result"]["ipv4_cidrs"]
-    ipv6 = data["result"]["ipv6_cidrs"]
+resp = requests.get(url=url, timeout=30)
+data = resp.json()
+ipv4 = data["result"]["ipv4_cidrs"]
+ipv6 = data["result"]["ipv6_cidrs"]
 
 # Rebuild configuration
 if option in (None, "-4", "--ipv4"):
@@ -125,14 +144,26 @@ if option in (None, "-6", "--ipv6"):
     cfrebuild(ipv6, "ip6tables", "/etc/nginx/cloudflare.ipv6.conf")
 
 # Figure out which init system is in use
-init = subprocess.check_output("ps -p 1 -o comm --no-headers", shell=True) .strip().decode('ascii')
+init = run(
+    ["ps", "-p", "1", "-o", "comm", "--no-headers"], encoding="utf-8", stdout=PIPE
+)
+init = init.stdout.strip()
 
 # Reload nginx
-if init == 'runit':
-    exec("nginx -t && sv reload nginx")
-elif init == 'init':
-    exec("nginx -t && service nginx reload")
-elif init == 'systemd':
-    exec("nginx -t && systemctl reload nginx")
+nginx = which("nginx")
+
+if nginx:
+    nginx_test = run([nginx, "-t"], stdout=PIPE)
+    if int(nginx_test.returncode) != 0:
+        sys.exit(0)
 else:
-    print('unknown init, reload nginx manually')
+    print("nginx not found, reload it manually")
+
+if init == "runit":
+    run(["sv", "reload", "nginx"])
+elif init == "init":
+    run(["service", "nginx", "reload"])
+elif init == "systemd":
+    run(["systemctl", "reload", "nginx"])
+else:
+    print("unknown init, reload nginx manually")
