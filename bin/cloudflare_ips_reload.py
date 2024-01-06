@@ -8,11 +8,14 @@ cloudflare_ips_reload
 # Imports
 # ----------------------------------------------------
 
-import requests
+import argparse
 import sys
 from shutil import which
 from subprocess import run, DEVNULL, PIPE
 from ipaddress import ip_network as is_ip_network
+
+# pip modules
+import requests
 
 # ----------------------------------------------------
 # CloudFlare-only nginx
@@ -52,27 +55,49 @@ from ipaddress import ip_network as is_ip_network
 # API URL for https://www.cloudflare.com/ips/
 URL = "https://api.cloudflare.com/client/v4/ips"
 
-# iptables chain name
-IPTABLES_CHAIN = "CLOUDFLARE"
-
-# iptables chain target
-IPTABLES_TARGET = "RETURN"
-
 # ----------------------------------------------------
 # Options
 # ----------------------------------------------------
 
-try:
-    OPTION = sys.argv[1]
-except Exception:
-    OPTION = None
 
-if OPTION not in (None, "-4", "-6", "--ipv4", "--ipv6"):
-    print("Usage: %s [option]\nOptions:\n" % sys.argv[0])
-    print(" -4, --ipv4\t# Only reload configuration for IPv4")
-    print(" -6, --ipv6\t# Only reload configuration for IPv6")
-    print("\nhttps://github.com/c0m4r/cloudflare-only-nginx")
-    sys.exit(0)
+# Parse Arguments
+parser = argparse.ArgumentParser(
+    description="CloudFlare-only nginx\nhttps://github.com/c0m4r/cloudflare-only-nginx",
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+)
+parser.add_argument(
+    "-4",
+    "--ipv4",
+    action="store_true",
+    help="only reload configuration for IPv4",
+    default=None,
+)
+parser.add_argument(
+    "-6",
+    "--ipv6",
+    action="store_true",
+    help="only reload configuration for IPv6",
+    default=None,
+)
+parser.add_argument(
+    "-s",
+    "--silent",
+    action="store_true",
+    help="silent mode - only prints errors",
+    default=False,
+)
+parser.add_argument(
+    "--chain",
+    help="iptables chain name (default: CLOUDFLARE)",
+    default="CLOUDFLARE",
+)
+parser.add_argument(
+    "--target",
+    help="iptables chain target (default: RETURN)",
+    default="RETURN",
+)
+
+args = parser.parse_args()
 
 # ----------------------------------------------------
 # Functions
@@ -83,7 +108,7 @@ def valid(ip):
     """validate ip network"""
     try:
         is_ip_network(ip)
-        if OPTION not in ("-s", "--silent"):
+        if args.silent is False:
             print(ip)
         return True
     except Exception:
@@ -94,15 +119,15 @@ def valid(ip):
 def cfrebuild(ips, iptcmd, confpath):
     """rebuild cloudflare configuration"""
     try:
-        f = open(confpath, "w+")
+        f = open(confpath, "w+", encoding="utf-8")
     except Exception:
         print("Can't open %s" % (confpath))
         sys.exit(1)
     if which(iptcmd) is None:
         print("%s not found" % (iptcmd))
         sys.exit(1)
-    run([iptcmd, "-N", IPTABLES_CHAIN], stderr=DEVNULL)
-    run([iptcmd, "-F", IPTABLES_CHAIN])
+    run([iptcmd, "-N", args.chain], check=False, stderr=DEVNULL)
+    run([iptcmd, "-F", args.chain], check=True)
     for ip in ips:
         if valid(ip):
             run(
@@ -124,14 +149,15 @@ def cfrebuild(ips, iptcmd, confpath):
                     "-m",
                     "comment",
                     "--comment",
-                    r"\'CloudFlare IP\'",
-                ]
+                    "CloudFlare IP",
+                ],
+                check=True,
             )
             f.write("set_real_ip_from %s;\n" % (ip))
         else:
             print("ip: %s is invalid" % (ip))
     f.close()
-    run([iptcmd, "-A", IPTABLES_CHAIN, "-j", IPTABLES_TARGET])
+    run([iptcmd, "-A", args.chain, "-j", args.target], check=True)
 
 
 # ----------------------------------------------------
@@ -144,15 +170,16 @@ ipv4 = data["result"]["ipv4_cidrs"]
 ipv6 = data["result"]["ipv6_cidrs"]
 
 # Rebuild configuration
-if OPTION in (None, "-4", "--ipv4"):
+if args.ipv6 is not True:
     cfrebuild(ipv4, "iptables", "/etc/nginx/cloudflare.ipv4.conf")
-if OPTION in (None, "-6", "--ipv6"):
+if args.ipv4 is not True:
     cfrebuild(ipv6, "ip6tables", "/etc/nginx/cloudflare.ipv6.conf")
 
 # Figure out which init system is in use
 init = run(
-    [which("ps"), "-p", "1", "-o", "comm", "--no-headers"],
+    [which("ps") or "ps", "-p", "1", "-o", "comm", "--no-headers"],
     encoding="utf-8",
+    check=True,
     stdout=PIPE,
 )
 init = init.stdout.strip()
@@ -160,18 +187,29 @@ init = init.stdout.strip()
 # Reload nginx
 nginx = which("nginx")
 
+if args.silent:
+    TO_STREAM = DEVNULL
+else:
+    TO_STREAM = None
+
 if nginx:
-    nginx_test = run([nginx, "-t"], stdout=PIPE)
+    nginx_test = run([nginx, "-t"], check=True, stdout=PIPE, stderr=TO_STREAM)
     if int(nginx_test.returncode) != 0:
         sys.exit(0)
 else:
     print("nginx not found, reload it manually")
 
 if init == "runit":
-    run([which("sv"), "reload", "nginx"])
+    run([which("sv") or "sv", "reload", "nginx"], check=True, stdout=TO_STREAM)
 elif init == "init":
-    run([which("service"), "nginx", "reload"])
+    run(
+        [which("service") or "service", "nginx", "reload"], check=True, stdout=TO_STREAM
+    )
 elif init == "systemd":
-    run([which("systemctl"), "reload", "nginx"])
+    run(
+        [which("systemctl") or "systemctl", "reload", "nginx"],
+        check=True,
+        stdout=TO_STREAM,
+    )
 else:
     print("unknown init, reload nginx manually")
