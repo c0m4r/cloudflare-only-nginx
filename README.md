@@ -1,6 +1,9 @@
 ##  CloudFlare-only nginx
 
-![Python](https://img.shields.io/badge/made%20with-python-blue?logo=python&logoColor=ffffff) [![CodeFactor](https://www.codefactor.io/repository/github/c0m4r/cloudflare-only-nginx/badge)](https://www.codefactor.io/repository/github/c0m4r/cloudflare-only-nginx)
+![Python](https://img.shields.io/badge/made%20with-python-blue?logo=python&logoColor=ffffff)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Test](https://github.com/c0m4r/Loki-daemonized/workflows/lint_python/badge.svg)](https://github.com/c0m4r/Loki-daemonized/actions)
+[![CodeFactor](https://www.codefactor.io/repository/github/c0m4r/cloudflare-only-nginx/badge)](https://www.codefactor.io/repository/github/c0m4r/cloudflare-only-nginx)
 
 This repository contains a complete configuration examples for CloudFlare-only nginx.
 
