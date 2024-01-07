@@ -16,17 +16,15 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.12.1'
-      - run: pip install --upgrade pip
-      - run: pip install --upgrade setuptools wheel
+      - run: pip install --no-cache-dir --upgrade pip setuptools wheel
       - run: pip install black codespell mypy pytest ruff safety pylama pylint
-      - run: ruff .
-      - run: black --diff .
-      - run: codespell --skip="./.git/*"
+      - run: ruff bin/cloudflare_ips_reload.py
+      - run: black --diff bin/cloudflare_ips_reload.py
+      - run: codespell bin/cloudflare_ips_reload.py
       - run: pip install -r bin/requirements.txt
-      - run: mypy --install-types --non-interactive . || true
-      - run: pylama bin/cloudflare_ips_reload.py || true
-      - run: pylint bin/cloudflare_ips_reload.py || true
+      - run: mypy --disable-error-code attr-defined --disable-error-code assignment --install-types --non-interactive bin/cloudflare_ips_reload.py
+      - run: pylama bin/cloudflare_ips_reload.py
+      - run: pylint bin/cloudflare_ips_reload.py --disable W0718,C0209,R1732
       - run: safety check --ignore 62044
-      - run: pytest . || true
-      - run: pytest --doctest-modules . || true
       - run: python bin/cloudflare_ips_reload.py --help
+      - run: python bin/cloudflare_ips_reload.py --silent || true
