@@ -1,4 +1,4 @@
-##  CloudFlare-only nginx
+#  CloudFlare-only nginx
 
 ![Python](https://img.shields.io/badge/made%20with-python-blue?logo=python&logoColor=ffffff)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -15,13 +15,13 @@ Use [Origin CA Certificates](https://developers.cloudflare.com/ssl/origin-config
 
 Keep in mind that CloudFlare will only use tcp/443 port (HTTPS). We don't need to expose 80/tcp.
 
-### Log real client IP
+## Log real client IP
 
 With [realip module](https://nginx.org/en/docs/http/ngx_http_realip_module.html) you can log real client IP sent by CloudFlare in [CF-Connecting-IP header](https://developers.cloudflare.com/support/troubleshooting/restoring-visitor-ips/restoring-original-visitor-ips/).
 
 Edit nginx.conf and add these settings inside `http` section:
 
-### nginx configuration
+## nginx configuration
 
 ```
 # realip
@@ -30,7 +30,7 @@ include cloudflare.ipv6.conf;
 real_ip_header CF-Connecting-IP;
 ```
 
-### iptables
+## iptables
 
 Before you use the script, make sure that incoming tcp/443 traffic is pointing to CLOUDFLARE chain.
 
@@ -41,7 +41,7 @@ Before you use the script, make sure that incoming tcp/443 traffic is pointing t
 
 If your INPUT default policy is ACCEPT, make sure to run cloudflare_ips_reload.py with `--target DROP`
 
-### Helper script
+## Helper script
 
 ```
 usage: cloudflare_ips_reload.py [-h] [-4] [-6] [-s] [--chain CHAIN] [--target TARGET]
@@ -61,3 +61,31 @@ options:
 This script will recreate iptables CLOUDFLARE chain and allow traffic from only CloudFlare networks, then recreate realip configuration and reload nginx.
 
 By default, with no options passed, it will recreate rules for both IPv4 and IPv6.
+
+## License
+
+> MIT License
+> 
+> Copyright (c) 2023 c0m4r
+> 
+> Permission is hereby granted, free of charge, to any person obtaining a copy
+> of this software and associated documentation files (the "Software"), to deal
+> in the Software without restriction, including without limitation the rights
+> to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+> copies of the Software, and to permit persons to whom the Software is
+> furnished to do so, subject to the following conditions:
+> 
+> The above copyright notice and this permission notice shall be included in all
+> copies or substantial portions of the Software.
+> 
+> THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+> IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+> FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+> AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+> LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+> OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+> SOFTWARE.
+
+## Funding
+
+If you found this software helpful, please consider [making donation](https://en.wosp.org.pl/fundacja/jak-wspierac-wosp/wesprzyj-online) to a charity on my behalf. Thank you.
