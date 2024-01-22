@@ -1,0 +1,26 @@
+[project]
+name = "cloudflare-only-nginx"
+version = "1.0.0"
+authors = [
+  { name="c0m4r", email="github@wolfet.pl" },
+]
+description = "nginx-style network configuration"
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = ["cloudflare", "nginx"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+  "requests>=2.31.0",
+]
+
+[project.scripts]
+cloudflare-only-nginx = "cloudflare_ips_reload:main"
+
+[project.urls]
+Homepage = "https://github.com/c0m4r/cloudflare-only-nginx"
+Issues = "https://github.com/c0m4r/cloudflare-only-nginx/issues"
