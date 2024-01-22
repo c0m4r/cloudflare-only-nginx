@@ -104,112 +104,120 @@ args = parser.parse_args()
 # ----------------------------------------------------
 
 
-def valid(ip):
+def valid(ip: str) -> bool:
     """validate ip network"""
     try:
         is_ip_network(ip)
         if args.silent is False:
             print(ip)
         return True
-    except Exception:
-        print("%s is not a valid IP" % (ip))
+    except ValueError:
+        print(f"{ip} is not a valid IP")
         return False
 
 
-def cfrebuild(ips, iptcmd, confpath):
+def cfrebuild(ips: list[str], iptcmd: str, confpath: str) -> None:
     """rebuild cloudflare configuration"""
     try:
-        f = open(confpath, "w+", encoding="utf-8")
-    except Exception:
-        print("Can't open %s" % (confpath))
-        sys.exit(1)
-    if which(iptcmd) is None:
-        print("%s not found" % (iptcmd))
-        sys.exit(1)
-    run([iptcmd, "-N", args.chain], check=False, stderr=DEVNULL)
-    run([iptcmd, "-F", args.chain], check=True)
-    for ip in ips:
-        if valid(ip):
-            run(
-                [
-                    iptcmd,
-                    "-A",
-                    "CLOUDFLARE",
-                    "-p",
-                    "tcp",
-                    "-s",
-                    ip,
-                    "--syn",
-                    "-m",
-                    "conntrack",
-                    "--ctstate",
-                    "NEW",
-                    "-j",
-                    "ACCEPT",
-                    "-m",
-                    "comment",
-                    "--comment",
-                    "CloudFlare IP",
-                ],
-                check=True,
-            )
-            f.write("set_real_ip_from %s;\n" % (ip))
-        else:
-            print("ip: %s is invalid" % (ip))
-    f.close()
-    run([iptcmd, "-A", args.chain, "-j", args.target], check=True)
+        with open(confpath, "w+", encoding="utf-8") as config:
+            if which(iptcmd) is None:
+                print(f"{iptcmd} not found")
+                sys.exit(1)
+            run([iptcmd, "-N", args.chain], check=False, stderr=DEVNULL)
+            run([iptcmd, "-F", args.chain], check=True)
+            for ip in ips:
+                if valid(ip):
+                    run(
+                        [
+                            iptcmd,
+                            "-A",
+                            "CLOUDFLARE",
+                            "-p",
+                            "tcp",
+                            "-s",
+                            ip,
+                            "--syn",
+                            "-m",
+                            "conntrack",
+                            "--ctstate",
+                            "NEW",
+                            "-j",
+                            "ACCEPT",
+                            "-m",
+                            "comment",
+                            "--comment",
+                            "CloudFlare IP",
+                        ],
+                        check=True,
+                    )
+                    config.write(f"set_real_ip_from {ip};\n")
+                else:
+                    print(f"ip: {ip} is invalid")
+            run([iptcmd, "-A", args.chain, "-j", args.target], check=True)
+    except OSError:
+        print(f"Can't open {confpath}")
+
+
+def reload_nginx(init: str, silent: bool) -> None:
+    """
+    Reload nginx
+    """
+    nginx = which("nginx")
+
+    if silent:
+        to_stream = DEVNULL
+    else:
+        to_stream = None
+
+    if nginx:
+        nginx_test = run([nginx, "-t"], check=True, stdout=PIPE, stderr=to_stream)
+        if int(nginx_test.returncode) != 0:
+            sys.exit(0)
+    else:
+        print("nginx not found, reload it manually")
+
+    if init == "runit":
+        run([which("sv") or "sv", "reload", "nginx"], check=True, stdout=to_stream)
+    elif init == "init":
+        run(
+            [which("service") or "service", "nginx", "reload"],
+            check=True,
+            stdout=to_stream,
+        )
+    elif init == "systemd":
+        run(
+            [which("systemctl") or "systemctl", "reload", "nginx"],
+            check=True,
+            stdout=to_stream,
+        )
+    else:
+        print("unknown init, reload nginx manually")
 
 
 # ----------------------------------------------------
 # Execute
 # ----------------------------------------------------
 
-resp = requests.get(url=URL, timeout=30)
-data = resp.json()
-ipv4 = data["result"]["ipv4_cidrs"]
-ipv6 = data["result"]["ipv6_cidrs"]
+if __name__ == "__main__":
+    resp = requests.get(url=URL, timeout=30)
+    data = resp.json()
+    ipv4 = data["result"]["ipv4_cidrs"]
+    ipv6 = data["result"]["ipv6_cidrs"]
 
-# Rebuild configuration
-if args.ipv6 is not True:
-    cfrebuild(ipv4, "iptables", "/etc/nginx/cloudflare.ipv4.conf")
-if args.ipv4 is not True:
-    cfrebuild(ipv6, "ip6tables", "/etc/nginx/cloudflare.ipv6.conf")
+    # Rebuild configuration
+    if args.ipv6 is not True:
+        cfrebuild(ipv4, "iptables", "/etc/nginx/cloudflare.ipv4.conf")
+    if args.ipv4 is not True:
+        cfrebuild(ipv6, "ip6tables", "/etc/nginx/cloudflare.ipv6.conf")
 
-# Figure out which init system is in use
-init = run(
-    [which("ps") or "ps", "-p", "1", "-o", "comm", "--no-headers"],
-    encoding="utf-8",
-    check=True,
-    stdout=PIPE,
-)
-init = init.stdout.strip()
-
-# Reload nginx
-nginx = which("nginx")
-
-if args.silent:
-    TO_STREAM = DEVNULL
-else:
-    TO_STREAM = None
-
-if nginx:
-    nginx_test = run([nginx, "-t"], check=True, stdout=PIPE, stderr=TO_STREAM)
-    if int(nginx_test.returncode) != 0:
-        sys.exit(0)
-else:
-    print("nginx not found, reload it manually")
-
-if init == "runit":
-    run([which("sv") or "sv", "reload", "nginx"], check=True, stdout=TO_STREAM)
-elif init == "init":
-    run(
-        [which("service") or "service", "nginx", "reload"], check=True, stdout=TO_STREAM
-    )
-elif init == "systemd":
-    run(
-        [which("systemctl") or "systemctl", "reload", "nginx"],
+    # Figure out which init system is in use
+    init_check = run(
+        [which("ps") or "ps", "-p", "1", "-o", "comm", "--no-headers"],
+        encoding="utf-8",
         check=True,
-        stdout=TO_STREAM,
+        stdout=PIPE,
     )
-else:
-    print("unknown init, reload nginx manually")
+    init_name = init_check.stdout.strip()
+
+    # Reload nginx
+    reload_nginx(init_name, args.silent)
