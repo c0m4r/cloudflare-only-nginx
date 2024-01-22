@@ -18,15 +18,17 @@ jobs:
           python-version: '3.12.1'
       - run: sudo apt install -y nginx
       - run: pip install --no-cache-dir --upgrade pip setuptools wheel
-      - run: pip install black codespell mypy pytest ruff safety pylama pylint
+      - run: pip install black codespell mypy pytest ruff safety pylama pylint pyright
       - run: ruff bin/cloudflare_ips_reload.py
-      - run: black --diff bin/cloudflare_ips_reload.py
+      - run: black --diff --color bin/cloudflare_ips_reload.py
       - run: codespell bin/cloudflare_ips_reload.py
       - run: pip install -r bin/requirements.txt
       - run: mypy --disable-error-code attr-defined --disable-error-code assignment --install-types --non-interactive bin/cloudflare_ips_reload.py
       - run: pylama bin/cloudflare_ips_reload.py
-      - run: pylint bin/cloudflare_ips_reload.py --disable W0718,C0209,R1732
+      - run: pylint bin/cloudflare_ips_reload.py
+      - run: pyright bin/cloudflare_ips_reload.py
       - run: safety check --ignore 62044
       - run: python bin/cloudflare_ips_reload.py --help
       - run: sudo systemctl enable nginx && sudo systemctl start nginx
-      - run: sudo python bin/cloudflare_ips_reload.py --silent || true
+      - run: sudo python bin/cloudflare_ips_reload.py
+      - run: sudo python bin/cloudflare_ips_reload.py --silent
