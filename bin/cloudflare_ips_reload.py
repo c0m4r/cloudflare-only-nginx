@@ -198,7 +198,11 @@ def reload_nginx(init: str, silent: bool) -> None:
 # Execute
 # ----------------------------------------------------
 
-if __name__ == "__main__":
+
+def main() -> None:
+    """
+    main
+    """
     resp = requests.get(url=URL, timeout=30)
     data = resp.json()
     ipv4 = data["result"]["ipv4_cidrs"]
@@ -221,3 +225,7 @@ if __name__ == "__main__":
 
     # Reload nginx
     reload_nginx(init_name, args.silent)
+
+
+if __name__ == "__main__":
+    main()
