@@ -16,6 +16,7 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.12.1'
+      - run: apt-get install nginx
       - run: pip install --no-cache-dir --upgrade pip setuptools wheel
       - run: pip install black codespell mypy pytest ruff safety pylama pylint
       - run: ruff bin/cloudflare_ips_reload.py
