@@ -1,6 +1,7 @@
 #  CloudFlare-only nginx
 
-![Python](https://img.shields.io/badge/made%20with-python-blue?logo=python&logoColor=ffffff)
+[![Python](https://img.shields.io/badge/made%20with-python-blue?logo=python&logoColor=ffffff)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/pypi-neatplan-blue?logo=pypi&logoColor=ffffff)](https://pypi.org/project/cloudflare-only-nginx/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Test](https://github.com/c0m4r/cloudflare-only-nginx/workflows/lint_python/badge.svg)](https://github.com/c0m4r/cloudflare-only-nginx/actions)
 [![CodeFactor](https://www.codefactor.io/repository/github/c0m4r/cloudflare-only-nginx/badge)](https://www.codefactor.io/repository/github/c0m4r/cloudflare-only-nginx)
@@ -61,6 +62,13 @@ options:
 This script will recreate iptables CLOUDFLARE chain and allow traffic from only CloudFlare networks, then recreate realip configuration and reload nginx.
 
 By default, with no options passed, it will recreate rules for both IPv4 and IPv6.
+
+### PyPI installation
+
+```
+pip install cloudflare-only-nginx
+cloudflare-only-nginx --help
+```
 
 ## License
 
