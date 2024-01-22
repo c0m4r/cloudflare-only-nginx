@@ -1,7 +1,7 @@
 #  CloudFlare-only nginx
 
 [![Python](https://img.shields.io/badge/made%20with-python-blue?logo=python&logoColor=ffffff)](https://www.python.org/)
-[![Python](https://img.shields.io/badge/pypi-neatplan-blue?logo=pypi&logoColor=ffffff)](https://pypi.org/project/cloudflare-only-nginx/)
+[![Python](https://img.shields.io/badge/pypi-cloudflare--only--nginx-blue?logo=pypi&logoColor=ffffff)](https://pypi.org/project/cloudflare-only-nginx/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Test](https://github.com/c0m4r/cloudflare-only-nginx/workflows/lint_python/badge.svg)](https://github.com/c0m4r/cloudflare-only-nginx/actions)
 [![CodeFactor](https://www.codefactor.io/repository/github/c0m4r/cloudflare-only-nginx/badge)](https://www.codefactor.io/repository/github/c0m4r/cloudflare-only-nginx)
