@@ -28,5 +28,5 @@ jobs:
       - run: pylint bin/cloudflare_ips_reload.py --disable W0718,C0209,R1732
       - run: safety check --ignore 62044
       - run: python bin/cloudflare_ips_reload.py --help
-      - run: ls -la /etc/nginx && sudo systemctl enable nginx && sudo systemct start nginx
+      - run: sudo systemctl enable nginx && sudo systemctl start nginx
       - run: sudo python bin/cloudflare_ips_reload.py --silent || true
