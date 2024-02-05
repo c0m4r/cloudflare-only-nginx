@@ -70,6 +70,15 @@ pip install cloudflare-only-nginx
 cloudflare-only-nginx --help
 ```
 
+#### via venv
+
+```
+python3 -m venv .venv
+. .venv/bin/activate
+pip install cloudflare-only-nginx
+cloudflare-only-nginx --help
+```
+
 ## License
 
 > MIT License
